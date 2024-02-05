@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=3 uid="uid://bcwd8kpfwo6kk"]
+
+[ext_resource type="Texture2D" uid="uid://cv8gtoibownw7" path="res://Resources/8x8+-export.png" id="1_01amk"]
+
+[sub_resource type="GDScript" id="GDScript_a38n7"]
+script/source = "extends Sprite2D
+
+
+@export var walljump = true
+@export var shift_move_multiplier = 10
+signal player_moved
+"
+
+[sub_resource type="Theme" id="Theme_e24ni"]
+default_font_size = 4
+
+[node name="PlayerDog" type="Sprite2D"]
+texture = ExtResource("1_01amk")
+offset = Vector2(2.08165e-12, -1)
+hframes = 16
+vframes = 24
+frame = 161
+script = SubResource("GDScript_a38n7")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="positionlabel" type="RichTextLabel" parent="."]
+offset_left = -140.0
+offset_top = 69.0
+offset_right = -114.0
+offset_bottom = 79.0
+theme = SubResource("Theme_e24ni")
+text = "Position"
