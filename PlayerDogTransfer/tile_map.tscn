@@ -1,7 +1,7 @@
 [gd_scene load_steps=23 format=3 uid="uid://dnme6fseft4gm"]
 
 [ext_resource type="Texture2D" uid="uid://eid5r0h3y0va" path="res://Resources/8x8+.png" id="1_5jm5v"]
-[ext_resource type="PackedScene" uid="uid://bcwd8kpfwo6kk" path="res://Scenes/PlayerDog.tscn" id="2_74ay6"]
+[ext_resource type="PackedScene" uid="uid://bcwd8kpfwo6kk" path="res://Resources/PlayerDog.tscn" id="2_74ay6"]
 [ext_resource type="Script" path="res://Timer.gd" id="3_5gen4"]
 
 [sub_resource type="TileMapPattern" id="TileMapPattern_qyp67"]
@@ -872,7 +872,7 @@ tile_set = SubResource("TileSet_msk66")
 cell_quadrant_size = 8
 format = 2
 
-[node name="PlayerDog" parent="." instance=ExtResource("2_74ay6")]
-
 [node name="Timer" type="Timer" parent="."]
 script = ExtResource("3_5gen4")
+
+[node name="PlayerDog" parent="." instance=ExtResource("2_74ay6")]

@@ -3,9 +3,10 @@
 [ext_resource type="Texture2D" uid="uid://cv8gtoibownw7" path="res://Resources/8x8+-export.png" id="1_s441n"]
 [ext_resource type="Script" path="res://goblin_1.gd" id="2_yvtsm"]
 
-[node name="Goblin1" type="Sprite2D"]
+[node name="Goblin1" type="Sprite2D" groups=["Enemy"]]
 texture = ExtResource("1_s441n")
 hframes = 16
 vframes = 24
 frame = 176
 script = ExtResource("2_yvtsm")
+health = 3

@@ -9,8 +9,7 @@ extends Node2D
 @onready var playerdog = $TileMap/PlayerDog
 @onready var positionlabel = $TileMap/PlayerDog/positionlabel
 @onready var goblin_scene = load("res://goblin_1.tscn")
-@onready var goblin_instance = goblin_scene.instantiate()
-@onready var numberofgoblins = 50
+@onready var numberofgoblins = 15
 @onready var goblin_positions = []
 signal player_moved
 
@@ -34,6 +33,7 @@ var rng = RandomNumberGenerator.new()
 
 func _ready():
 	playerdog.position = tilemap.map_to_local(player_position)
+	playerdog.mainController = self  
 	add_user_signal("TurnChanged")
 	generate_map()
 
@@ -59,6 +59,8 @@ func generate_map():
 	map_addPatterns()
 	map_addBorder()
 	map_addEnemies()
+	get_tree().get_nodes_in_group("Enemy")
+
 
 func map_addBackground():
 	for x in width:
@@ -80,11 +82,10 @@ func map_addBorder():
 func map_addEnemies():
 	for x in range(numberofgoblins):
 		var new_goblin = goblin_scene.instantiate()
-		new_goblin.position = tilemap.map_to_local(new_goblin.goblin_position)
 		add_child(new_goblin)
-		goblin_positions.append(new_goblin)
+		new_goblin.position = tilemap.map_to_local(new_goblin.enemy_position)
+		goblin_positions.append(new_goblin.enemy_position)
 		playerdog.player_moved.connect(new_goblin._on_player_moved)
-	
 
 func map_addPatterns():
 	for x in width:
@@ -109,45 +110,13 @@ func between(val, start, end):
 	if start <= val and val < end:
 		return true
 
-func _unhandled_input(event):
-	if Input.is_action_just_pressed("SW"):
-		test_cell(Vector2i(-1,1))
-		playerdog.flip_h = true
-		player_turn()
-	elif Input.is_action_just_pressed("SE"):
-		test_cell(Vector2i(1,1))
-		playerdog.flip_h = false
-		player_turn()
-	elif Input.is_action_just_pressed("S"):
-		test_cell(Vector2i(0,1))
-		player_turn()
-	elif Input.is_action_just_pressed("N"):
-		test_cell(Vector2i(0,-1))
-		player_turn()
-	elif Input.is_action_just_pressed("NW"):
-		test_cell(Vector2i(-1,-1))
-		playerdog.flip_h = true
-		player_turn()
-	elif Input.is_action_just_pressed("NE"):
-		test_cell(Vector2i(1,-1))
-		playerdog.flip_h = false
-		player_turn()
-	elif Input.is_action_just_pressed("E"):
-		test_cell(Vector2i(1,0))
-		playerdog.flip_h = false
-		player_turn()
-	elif Input.is_action_just_pressed("W"):
-		test_cell(Vector2i(-1,0))
-		playerdog.flip_h = true
-		player_turn()
-
 func player_turn():
 	playerdog.emit_signal("player_moved")
 
 func update_position():
 	playerdog.position = tilemap.map_to_local(player_position)
 	positionlabel.text = str(player_position)
-	test_for_goblin()
+
 	
 func test_cell(coords: Vector2i):
 	var shift_jump = 1
@@ -158,18 +127,28 @@ func test_cell(coords: Vector2i):
 	var testingcell = player_position + coords 
 	var data = tilemap.get_cell_tile_data(0, testingcell)
 	if data:
-		if data.get_custom_data_by_layer_id(0) == 1:
+		if data.get_custom_data_by_layer_id(0) == 1: 
 			if playerdog.walljump:
 				player_position += (-2 * coords)
 				update_position()
 			else:
 				pass
 		else: 
-			player_position += coords * shift_jump
-			update_position()
+			var targetposition = player_position + (coords * shift_jump)
+			if test_for_goblin(targetposition) == false:
+				player_position = targetposition
+				update_position()
 
-func test_for_goblin():
-	for goblin in goblin_positions:
-		if is_instance_valid(goblin) and player_position == goblin.goblin_position:
-			goblin.queue_free()
-			goblin_positions.erase(goblin)
+
+func test_for_goblin(targetposition):
+	var goblins = get_tree().get_nodes_in_group("Enemy")
+	for goblin in goblins:
+		if is_instance_valid(goblin) and targetposition == goblin.enemy_position:
+			goblin.health -= 1
+			if goblin.health <= 0:
+				goblin.queue_free()
+				goblin_positions.erase(goblin)
+				return false
+			else:
+				return true
+	return false
