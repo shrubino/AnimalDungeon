@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3 uid="uid://bcwd8kpfwo6kk"]
+[gd_scene load_steps=7 format=3 uid="uid://bcwd8kpfwo6kk"]
 
 [ext_resource type="Texture2D" uid="uid://cv8gtoibownw7" path="res://Resources/8x8+-export.png" id="1_01amk"]
 
@@ -11,9 +11,37 @@ class_name Player
 @export var shift_move_multiplier = 10
 signal player_moved
 var mainController 
+var gridPosition = Vector2i(10,10)
+var health = 10
+@onready var healthbar = $CanvasLayer/ProgressBar
+var inventory = {}
+
+func itemget(itemtype):
+	if itemtype == Item.itemtypes.apple:
+		health += 2
+		healthbar.value = health
+	if itemtype == Item.itemtypes.key:
+		if inventory.has(Item.itemtypes.key):
+			inventory[Item.itemtypes.key] += 1
+		else:
+			inventory[Item.itemtypes.key] = 1
+		print(inventory)
+	
+func _ready():
+	healthbar.max_value = health
+	healthbar.value = health
+	
+func takedamage(damage):
+	health -= damage
+	if health <= 0:
+		print(\"youredead\")
+		queue_free()
+	else:
+		print(\"ouch\")
+	healthbar.value = health
 
 
-func _unhandled_input(event):
+func _unhandled_input(_event):
 	if Input.is_action_just_pressed(\"SW\"):
 		mainController.test_cell(Vector2i(-1,1))
 		self.flip_h = true
@@ -46,6 +74,14 @@ func _unhandled_input(event):
 		mainController.player_turn()
 "
 
+[sub_resource type="Theme" id="Theme_t47nc"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pk34j"]
+bg_color = Color(0.666667, 0.121569, 0.113725, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rw4h1"]
+bg_color = Color(0.298039, 0.643137, 0, 1)
+
 [sub_resource type="Theme" id="Theme_e24ni"]
 default_font_size = 4
 
@@ -58,6 +94,22 @@ frame = 161
 script = SubResource("GDScript_a38n7")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = SubResource("Theme_t47nc")
+theme_override_styles/background = SubResource("StyleBoxFlat_pk34j")
+theme_override_styles/fill = SubResource("StyleBoxFlat_rw4h1")
+value = 50.0
+show_percentage = false
 
 [node name="positionlabel" type="RichTextLabel" parent="."]
 offset_left = -140.0

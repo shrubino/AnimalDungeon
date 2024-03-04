@@ -3,11 +3,13 @@ extends Node2D
 @export_category("Basics")
 @export var width = 100
 @export var height = 100
-@export var player_position = Vector2i(10,10)
+
 @onready var tilemap = $TileMap
 @onready var tileset = tilemap.tile_set
 @onready var playerdog = $TileMap/PlayerDog
 @onready var positionlabel = $TileMap/PlayerDog/positionlabel
+@onready var item_scene = load("res://item.tscn")
+@onready var itemnumber = 5
 @onready var goblin_scene = load("res://goblin_1.tscn")
 @onready var numberofgoblins = 15
 @onready var goblin_positions = []
@@ -32,7 +34,7 @@ signal player_moved
 var rng = RandomNumberGenerator.new()
 
 func _ready():
-	playerdog.position = tilemap.map_to_local(player_position)
+	playerdog.position = tilemap.map_to_local(playerdog.gridPosition)
 	playerdog.mainController = self  
 	add_user_signal("TurnChanged")
 	generate_map()
@@ -59,7 +61,9 @@ func generate_map():
 	map_addPatterns()
 	map_addBorder()
 	map_addEnemies()
+	map_addItems()
 	get_tree().get_nodes_in_group("Enemy")
+	
 
 
 func map_addBackground():
@@ -83,6 +87,8 @@ func map_addEnemies():
 	for x in range(numberofgoblins):
 		var new_goblin = goblin_scene.instantiate()
 		add_child(new_goblin)
+		new_goblin.tilemap = tilemap
+		new_goblin.player = playerdog
 		new_goblin.position = tilemap.map_to_local(new_goblin.enemy_position)
 		goblin_positions.append(new_goblin.enemy_position)
 		playerdog.player_moved.connect(new_goblin._on_player_moved)
@@ -91,7 +97,7 @@ func map_addPatterns():
 	for x in width:
 		for y in height:
 			if rng.randf() > .99:
-				tilemap.set_pattern(0, Vector2i(x,y), tileset.get_pattern(randi_range(0,15)))
+				tilemap.set_pattern(0, Vector2i(x,y), tileset.get_pattern(randi_range(0,20)))
 
 func map_addBiomes():
 	var org = generate_noise(o_type, o_gain, o_octaves, o_lacunarity, o_frequency)
@@ -106,6 +112,15 @@ func map_addBiomes():
 			if org[pos] < 0.5 and size[pos] < 0.5:
 				tilemap.set_cell(0, Vector2i(x,y), 0, Vector2i(randi_range(0,7), randi_range(20,21)), 0)
 
+func map_addItems():
+	for items in itemnumber:
+		var item = item_scene.instantiate()
+		item.item_position = Vector2i(randi_range(5,10),randi_range(5,10))
+		item.position = tilemap.map_to_local(item.item_position)
+		item.itemname = Item.itemtypes.key
+		add_child(item)
+	
+
 func between(val, start, end):
 	if start <= val and val < end:
 		return true
@@ -114,8 +129,8 @@ func player_turn():
 	playerdog.emit_signal("player_moved")
 
 func update_position():
-	playerdog.position = tilemap.map_to_local(player_position)
-	positionlabel.text = str(player_position)
+	playerdog.position = tilemap.map_to_local(playerdog.gridPosition)
+	positionlabel.text = str(playerdog.gridPosition)
 
 	
 func test_cell(coords: Vector2i):
@@ -124,21 +139,29 @@ func test_cell(coords: Vector2i):
 		shift_jump = playerdog.shift_move_multiplier
 	else :
 		shift_jump = 1
-	var testingcell = player_position + coords 
+	var testingcell = playerdog.gridPosition + coords 
 	var data = tilemap.get_cell_tile_data(0, testingcell)
 	if data:
 		if data.get_custom_data_by_layer_id(0) == 1: 
 			if playerdog.walljump:
-				player_position += (-2 * coords)
+				playerdog.gridPosition += (-2 * coords)
 				update_position()
 			else:
 				pass
 		else: 
-			var targetposition = player_position + (coords * shift_jump)
+			var targetposition = playerdog.gridPosition + (coords * shift_jump)
 			if test_for_goblin(targetposition) == false:
-				player_position = targetposition
+				playerdog.gridPosition = targetposition
+				update_position()
+			if test_for_item(targetposition) == true:
 				update_position()
 
+func test_for_item(targetposition):
+	var items = get_tree().get_nodes_in_group("Items")
+	for item in items:
+		if is_instance_valid(item) and targetposition == item.item_position:
+			playerdog.itemget(item.itemname)
+			item.queue_free()
 
 func test_for_goblin(targetposition):
 	var goblins = get_tree().get_nodes_in_group("Enemy")
