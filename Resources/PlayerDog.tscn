@@ -1,0 +1,120 @@
+[gd_scene load_steps=7 format=3 uid="uid://bcwd8kpfwo6kk"]
+
+[ext_resource type="Texture2D" uid="uid://cv8gtoibownw7" path="res://Resources/8x8+-export.png" id="1_01amk"]
+
+[sub_resource type="GDScript" id="GDScript_a38n7"]
+script/source = "extends Sprite2D
+
+class_name Player 
+
+@export var walljump = false
+@export var shift_move_multiplier = 10
+signal player_moved
+var mainController 
+var gridPosition = Vector2i(2,2)
+var health = 100
+@onready var healthbar = $CanvasLayer/ProgressBar
+var inventory = {}
+
+func itemget(itemtype):
+	if itemtype == Item.itemtypes.apple:
+		health += 2
+		healthbar.value = health
+	if itemtype == Item.itemtypes.key:
+		if inventory.has(Item.itemtypes.key):
+			inventory[Item.itemtypes.key] += 1
+		else:
+			inventory[Item.itemtypes.key] = 1
+		print(inventory)
+	
+func _ready():
+	healthbar.max_value = health
+	healthbar.value = health
+	
+func takedamage(damage):
+	health -= damage
+	if health <= 0:
+		print(\"youredead\")
+		queue_free()
+	else:
+		print(\"ouch\")
+	healthbar.value = health
+
+
+func _unhandled_input(_event):
+	var targetcell = Vector2i(0,0)
+	if Input.is_action_just_pressed(\"SW\"):
+		targetcell = Vector2i(-1,1)
+	elif Input.is_action_just_pressed(\"SE\"):
+		targetcell = Vector2i(1,1)
+	elif Input.is_action_just_pressed(\"S\"):
+		targetcell = Vector2i(0,1)
+	elif Input.is_action_just_pressed(\"N\"):
+		targetcell = Vector2i(0,-1)
+	elif Input.is_action_just_pressed(\"NW\"):
+		targetcell = Vector2i(-1,-1)
+	elif Input.is_action_just_pressed(\"NE\"):
+		targetcell = Vector2i(1,-1)
+	elif Input.is_action_just_pressed(\"E\"):
+		targetcell = Vector2i(1,0)
+	elif Input.is_action_just_pressed(\"W\"):
+		targetcell = Vector2i(-1,0)
+	elif Input.is_action_pressed(\"Camera\"):
+		$Camera2D.zoom = Vector2(0.25,0.25)
+	else:
+		$Camera2D.zoom = Vector2(1,1)
+			
+	
+	if targetcell != Vector2i(0,0):
+		mainController.player_turn()
+		mainController.test_cell(targetcell, self)
+		if targetcell.x < 0:
+			flip_h = true
+		elif targetcell.x > 0:
+			flip_h = false
+"
+
+[sub_resource type="Theme" id="Theme_t47nc"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pk34j"]
+bg_color = Color(0.666667, 0.121569, 0.113725, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rw4h1"]
+bg_color = Color(0.298039, 0.643137, 0, 1)
+
+[sub_resource type="Theme" id="Theme_e24ni"]
+default_font_size = 4
+
+[node name="PlayerDog" type="Sprite2D"]
+texture = ExtResource("1_01amk")
+offset = Vector2(2.08165e-12, -1)
+hframes = 16
+vframes = 24
+frame = 161
+script = SubResource("GDScript_a38n7")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ProgressBar" type="ProgressBar" parent="CanvasLayer"]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -4.0
+grow_horizontal = 2
+grow_vertical = 0
+theme = SubResource("Theme_t47nc")
+theme_override_styles/background = SubResource("StyleBoxFlat_pk34j")
+theme_override_styles/fill = SubResource("StyleBoxFlat_rw4h1")
+value = 50.0
+show_percentage = false
+
+[node name="positionlabel" type="RichTextLabel" parent="."]
+offset_left = -140.0
+offset_top = 69.0
+offset_right = -114.0
+offset_bottom = 79.0
+theme = SubResource("Theme_e24ni")
+text = "Position"

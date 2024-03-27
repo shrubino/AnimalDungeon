@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://b8vgn22d6k8s0"]
+
+[ext_resource type="Texture2D" uid="uid://cv8gtoibownw7" path="res://Resources/8x8+-export.png" id="1_0pii8"]
+[ext_resource type="Script" path="res://item.gd" id="2_xm1c1"]
+
+[node name="Item" type="Sprite2D" groups=["Items"]]
+texture = ExtResource("1_0pii8")
+region_enabled = true
+script = ExtResource("2_xm1c1")
